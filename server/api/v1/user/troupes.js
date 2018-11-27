@@ -173,7 +173,6 @@ module.exports = {
 
   subresources: {
     'settings': require('./troupe-settings'),
-    'unreadItems': require('./unread-items'),
-    'collapsedItems': require('./collapsed-items')
+    'unreadItems': require('./unread-items')
   }
 };

@@ -23,7 +23,6 @@ These modules will initially be kept in the same repo as the monolith, but since
  - [`config/`](../config): Configuration files
  - [`modules/`](../modules#modules): Monorepo style submodules
  - [`public/`](../public): Public assets for https://gitter.im
- - [`redis-lua/`](../redis-lua): Lua scripts for Redis
  - [`server/`](../server#server): https://gitter.im backend
  - [`shared/`](../shared): Isomorphic Javascript shared by frontend and backend.
 

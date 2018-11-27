@@ -4,7 +4,6 @@ var env = require('gitter-web-env');
 var logger = env.logger;
 var _ = require('lodash');
 var unreadItemService = require("gitter-web-unread-items");
-var collapsedChatsService = require('../../services/collapsed-chats-service');
 var getVersion = require('gitter-web-serialization/lib/get-model-version');
 var UserIdStrategy = require('./user-id-strategy');
 var mongoUtils = require('gitter-web-persistence-utils/lib/mongo-utils');
@@ -39,27 +38,6 @@ UnreadItemStrategy.prototype = {
   name: 'UnreadItemStrategy'
 };
 
-function CollapsedItemStrategy(options) {
-  var itemsHash;
-  var userId = options.userId;
-  var roomId = options.roomId;
-
-  this.preload = function() {
-    return collapsedChatsService.getHash(userId, roomId)
-      .then(function(hash) {
-        itemsHash = hash;
-      });
-  };
-
-  this.map = function (chatId) {
-    return itemsHash[chatId] ? true : undefined; // Don't send false,
-  };
-}
-
-CollapsedItemStrategy.prototype = {
-  name: 'CollapsedItemStrategy'
-};
-
 function ChatStrategy(options) {
   if (!options) options = {};
 
@@ -80,7 +58,7 @@ function ChatStrategy(options) {
     }
   }
 
-  var userStrategy,unreadItemStrategy, collapsedItemStrategy;
+  var userStrategy,unreadItemStrategy;
 
   var defaultUnreadStatus = options.unread === undefined ? true : !!options.unread;
 
@@ -101,11 +79,6 @@ function ChatStrategy(options) {
     if (options.currentUserId && options.unread === undefined) {
       unreadItemStrategy = new UnreadItemStrategy({ userId: options.currentUserId, roomId: options.troupeId });
       strategies.push(unreadItemStrategy.preload());
-    }
-
-    if (options.currentUserId && options.troupeId) {
-      collapsedItemStrategy = new CollapsedItemStrategy({ userId: options.currentUserId, roomId: options.troupeId });
-      strategies.push(collapsedItemStrategy.preload());
     }
 
     return Promise.all(strategies);
@@ -136,7 +109,6 @@ function ChatStrategy(options) {
 
   this.map = function(item) {
     var unread = unreadItemStrategy ? unreadItemStrategy.map(item._id) : defaultUnreadStatus;
-    var collapsed = collapsedItemStrategy && collapsedItemStrategy.map(item._id);
 
     var castArray = options.lean ? undefinedForEmptyArray : safeArray;
 
@@ -154,7 +126,6 @@ function ChatStrategy(options) {
       editedAt: item.editedAt ? formatDate(item.editedAt) : undefined,
       fromUser: options.user ? options.user : mapUser(item.fromUserId),
       unread: unread,
-      collapsed: collapsed,
       readBy: item.readBy ? item.readBy.length : undefined,
       urls: castArray(item.urls),
       initial: initial || undefined,
